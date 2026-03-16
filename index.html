@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Cronograma Lei do Bem 2025 — Up Brasil</title>
+<title id="page-title">Cronograma Lei do Bem</title>
+<link id="favicon" rel="icon" type="image/png" href=""/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -20,17 +21,20 @@
   font-family:'DM Sans',sans-serif;
 }
 body{background:var(--bg);color:var(--text);min-height:100vh}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:60px;position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-mark{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.logo-mark svg{width:18px;height:18px}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;height:64px;position:sticky;top:0;z-index:100}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-img{height:36px;width:auto;max-width:160px;object-fit:contain;display:none}
+.logo-fallback{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-fallback svg{width:20px;height:20px}
+.logo-text{display:flex;flex-direction:column}
 .logo-name{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.3px}
 .logo-sub{font-size:11px;color:var(--text-sec);font-family:'DM Mono',monospace;margin-top:1px}
 .page{max-width:780px;margin:0 auto;padding:2rem 1.5rem 4rem}
 .hero{margin-bottom:2rem}
 .hero-label{font-size:11px;font-weight:500;color:var(--blue);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:6px}
 .hero-title{font-size:24px;font-weight:600;color:var(--text);letter-spacing:-.5px;line-height:1.2}
-.hero-meta{font-size:13px;color:var(--text-sec);margin-top:4px}
+.hero-client{font-size:28px;font-weight:600;color:var(--blue);letter-spacing:-.5px;line-height:1.2;margin-top:2px}
+.hero-meta{font-size:13px;color:var(--text-sec);margin-top:6px}
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:2rem}
 .metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
 .metric-label{font-size:11px;color:var(--text-hint);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
@@ -88,11 +92,12 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
 <body>
 
 <div class="topbar">
-  <div class="logo">
-    <div class="logo-mark">
+  <div class="logo-wrap">
+    <img class="logo-img" id="logo-img" src="" alt="Logo"/>
+    <div class="logo-fallback" id="logo-fallback">
       <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" fill="white" opacity=".9"/><rect x="10" y="2" width="6" height="6" rx="1.5" fill="white" opacity=".6"/><rect x="2" y="10" width="6" height="6" rx="1.5" fill="white" opacity=".6"/><rect x="10" y="10" width="6" height="6" rx="1.5" fill="white" opacity=".3"/></svg>
     </div>
-    <div>
+    <div class="logo-text">
       <div class="logo-name" id="client-name">Carregando...</div>
       <div class="logo-sub" id="client-sub">Lei do Bem</div>
     </div>
@@ -102,6 +107,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh}
 <div class="page">
   <div class="hero">
     <div class="hero-label">Cronograma de execução</div>
+    <div class="hero-client" id="hero-client"></div>
     <div class="hero-title" id="hero-title">Lei do Bem — Ano-base 2025</div>
     <div class="hero-meta" id="hero-meta">Carregando dados...</div>
   </div>
@@ -162,27 +168,24 @@ const CLIENT_SLUG  = "up-brasil";
 
 async function fetchJSON(path) {
   const res = await fetch(SUPABASE_URL + path, {
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY
-    }
+    headers: {"apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY}
   });
   if (!res.ok) throw new Error("Erro ao carregar dados: " + res.status);
   return res.json();
 }
 
 function sc(s) {
-  if (s === "done")        return {bg:"var(--green-light)", text:"var(--green)",   dot:"var(--green-mid)", label:"Concluído"};
-  if (s === "in-progress") return {bg:"var(--blue-light)",  text:"var(--blue)",    dot:"var(--blue-mid)",  label:"Em andamento"};
-  if (s === "delayed")     return {bg:"var(--red-light)",   text:"var(--red)",     dot:"var(--red-mid)",   label:"Em atraso"};
-  return                          {bg:"var(--gray-light)",  text:"var(--gray)",    dot:"var(--gray-mid)",  label:"Pendente"};
+  if (s === "done")        return {bg:"var(--green-light)", text:"var(--green)",  dot:"var(--green-mid)", label:"Concluído"};
+  if (s === "in-progress") return {bg:"var(--blue-light)",  text:"var(--blue)",   dot:"var(--blue-mid)",  label:"Em andamento"};
+  if (s === "delayed")     return {bg:"var(--red-light)",   text:"var(--red)",    dot:"var(--red-mid)",   label:"Em atraso"};
+  return                          {bg:"var(--gray-light)",  text:"var(--gray)",   dot:"var(--gray-mid)",  label:"Pendente"};
 }
 
 function stageStatus(atividades) {
   if (!atividades.length) return "pending";
-  if (atividades.some(t => t.status === "delayed"))     return "delayed";
+  if (atividades.some(t => t.status === "delayed")) return "delayed";
   const done = atividades.filter(t => t.status === "done").length;
-  if (done === atividades.length)                       return "done";
+  if (done === atividades.length) return "done";
   if (done > 0 || atividades.some(t => t.status === "in-progress")) return "in-progress";
   return "pending";
 }
@@ -205,19 +208,36 @@ async function init() {
     const cliente = clienteArr[0];
     if (!cliente) throw new Error("Cliente não encontrado.");
 
+    // Logo e favicon
+    if (cliente.logo_url) {
+      const logoImg = document.getElementById("logo-img");
+      const logoFallback = document.getElementById("logo-fallback");
+      logoImg.src = cliente.logo_url;
+      logoImg.style.display = "block";
+      logoFallback.style.display = "none";
+      document.getElementById("favicon").href = cliente.logo_url;
+    }
+
+    // Título da aba
+    document.getElementById("page-title").textContent = cliente.nome + " — Lei do Bem " + cliente.ano_base;
+
+    // Cabeçalho
     document.getElementById("client-name").textContent = cliente.nome;
     document.getElementById("client-sub").textContent  = "Lei do Bem " + cliente.ano_base;
+
+    // Hero
+    document.getElementById("hero-client").textContent = cliente.nome;
     document.getElementById("hero-title").textContent  = "Lei do Bem — Ano-base " + cliente.ano_base;
-    document.getElementById("hero-meta").textContent   = cliente.nome + " · Acompanhamento atualizado em tempo real";
+    document.getElementById("hero-meta").textContent   = "Acompanhamento atualizado em tempo real";
 
     const atividades = itens.filter(i => i.tipo === "atividade");
     const documentos  = itens.filter(i => i.tipo === "documento");
 
-    const totalAtiv   = atividades.length;
-    const doneAtiv    = atividades.filter(a => a.status === "done").length;
-    const pct         = totalAtiv ? Math.round(doneAtiv / totalAtiv * 100) : 0;
-    const pendDocs    = documentos.filter(d => d.status === "pending").length;
-    const hasDelayed  = itens.some(i => i.status === "delayed");
+    const totalAtiv  = atividades.length;
+    const doneAtiv   = atividades.filter(a => a.status === "done").length;
+    const pct        = totalAtiv ? Math.round(doneAtiv / totalAtiv * 100) : 0;
+    const pendDocs   = documentos.filter(d => d.status === "pending").length;
+    const hasDelayed = itens.some(i => i.status === "delayed");
 
     const doneStages = etapas.filter(e => {
       const ea = atividades.filter(a => a.etapa_id === e.id);
@@ -231,8 +251,8 @@ async function init() {
     document.getElementById("met-stages").textContent       = doneStages;
     document.getElementById("met-stages-total").textContent = "de " + etapas.length + " etapas";
     document.getElementById("met-docs").textContent         = pendDocs;
-    document.getElementById("alert-pend").style.display     = pendDocs > 0  ? "flex" : "none";
-    document.getElementById("alert-delayed").style.display  = hasDelayed    ? "flex" : "none";
+    document.getElementById("alert-pend").style.display     = pendDocs > 0 ? "flex" : "none";
+    document.getElementById("alert-delayed").style.display  = hasDelayed   ? "flex" : "none";
 
     const list = document.getElementById("stages-list");
     list.innerHTML = "";
